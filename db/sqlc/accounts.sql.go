@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createAccount = `-- name: CreateAccount :one
@@ -62,6 +63,42 @@ func (q *Queries) GetAccount(ctx context.Context, id int64) (Accounts, error) {
 		&i.Balance,
 		&i.Currency,
 		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getEntryWithAccount = `-- name: GetEntryWithAccount :one
+SELECT
+  e.id, e.account_id, e.amount, e.created_at,
+  a.owner,
+  a.balance
+FROM
+  entries as e
+  JOIN accounts as a
+  ON e.account_id = a.id
+WHERE e.id = $1
+LIMIT 1
+`
+
+type GetEntryWithAccountRow struct {
+	ID        int64     `json:"id"`
+	AccountID int64     `json:"account_id"`
+	Amount    int64     `json:"amount"`
+	CreatedAt time.Time `json:"created_at"`
+	Owner     string    `json:"owner"`
+	Balance   int64     `json:"balance"`
+}
+
+func (q *Queries) GetEntryWithAccount(ctx context.Context, id int64) (GetEntryWithAccountRow, error) {
+	row := q.db.QueryRowContext(ctx, getEntryWithAccount, id)
+	var i GetEntryWithAccountRow
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Amount,
+		&i.CreatedAt,
+		&i.Owner,
+		&i.Balance,
 	)
 	return i, err
 }
