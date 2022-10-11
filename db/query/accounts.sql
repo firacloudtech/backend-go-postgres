@@ -26,3 +26,15 @@ RETURNING *;
 
 -- name: DeleteAccount :exec
 DELETE FROM accounts WHERE id = $1;
+
+-- name: GetEntryWithAccount :one
+SELECT
+  e.*,
+  a.owner,
+  a.balance
+FROM
+  entries as e
+  JOIN accounts as a
+  ON e.account_id = a.id
+WHERE e.id = $1
+LIMIT 1;
